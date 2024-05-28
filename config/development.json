@@ -1,0 +1,33 @@
+{
+    "app": {
+      "port": 3000
+    },
+    "postgres": {
+      "host": "127.0.0.1",
+      "port": 5432,
+      "username": "admin",
+      "password": "password123",
+      "database": "my_db"
+    },
+    "sqs": {
+      "example": {
+        "url": "https://sqs.ap-southeast-1.amazonaws.com/891131445954/meliodas_queue",
+        "region": "ap-southeast-1"
+      }
+    },
+    "redis": {
+      "url": "redis://127.0.0.1:6479"
+    },
+    "jwt": {
+      "secret": "",
+      "expiresIn": "30d"
+    },
+    "rmq": {
+      "url": ""
+    },
+    "aws": {
+      "accessKeyId": "",
+      "secretAccessKey": "",
+      "region": "ap-southeast-1"
+    }
+  }

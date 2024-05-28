@@ -1,0 +1,33 @@
+{
+    "app": {
+      "port": 3000
+    },
+    "postgres": {
+      "host": "",
+      "port": 5432,
+      "username": "",
+      "password": "",
+      "database": ""
+    },
+    "sqs": {
+      "example": {
+        "url": "",
+        "region": ""
+      }
+    },
+    "redis": {
+      "url": ""
+    },
+    "jwt": {
+      "secret": "",
+      "expiresIn": ""
+    },
+    "rmq": {
+      "url": ""
+    },
+    "aws": {
+      "accessKeyId": "",
+      "secretAccessKey": "",
+      "region": ""
+    }
+  }

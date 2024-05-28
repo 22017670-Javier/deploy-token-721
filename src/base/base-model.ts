@@ -4,15 +4,16 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
+  DataType,
 } from 'sequelize-typescript';
 
 export class BaseModel extends Model {
-  //   @Column({
-  //     type: DataType.UUID,
-  //     defaultValue: DataType.UUID,
-  //     primaryKey: true,
-  //   })
-  //   id: string;
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUID,
+    primaryKey: true,
+  })
+  id: string;
 
   @CreatedAt
   @Column({

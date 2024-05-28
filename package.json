@@ -26,12 +26,15 @@
     "@nestjs/microservices": "^10.3.8",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.3.1",
+    "@truffle/hdwallet-provider": "^2.1.15",
+    "dotenv": "^16.4.5",
     "nestjs-zod": "^3.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "sequelize-typescript": "^2.1.6",
     "unplugin-swc": "^1.4.5",
     "vitest": "^1.6.0",
+    "web3": "^4.9.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

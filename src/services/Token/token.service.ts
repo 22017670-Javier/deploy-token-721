@@ -16,22 +16,28 @@ export class TokenService {
   ) {
     const InfuraUrl = `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
 
-    const privateKey = process.env.PRIVATE_KEY;
+    const privateKey = process.env.DEV_PRIVATE_KEY;
     if (!privateKey) {
       throw new Error('PRIVATE_KEY is required');
     }
     this.privateKey = privateKey;
 
-    const provider = new HDWalletProvider(this.privateKey, InfuraUrl) as any;
-    this.web3 = new Web3(provider);
+    // const provider = new HDWalletProvider(this.privateKey, InfuraUrl) as any;
+    const provider = new HDWalletProvider({
+      privateKeys: [this.privateKey],
+      providerOrUrl: InfuraUrl,
+    });
+    this.web3 = new Web3(provider as any);
   }
 
   async deployToken(dto: {
     name: string;
     symbol: string;
+    decimals: number;
     totalSupply: number;
   }) {
-    const { name, symbol, totalSupply } = dto;
+    const { name, symbol, decimals, totalSupply } = dto;
+    const owner = (await this.web3.eth.getAccounts())[0];
 
     const contract = new this.web3.eth.Contract(TokenArtifact.abi);
     // This line of code creates a new contract instance in the application so that it knows how to interact with an already deployed contract on the ETH network
@@ -40,7 +46,7 @@ export class TokenService {
     const deployOptions = {
       data: TokenArtifact.bytecode,
       // Contains the compiled contract that is to be deployed onto the network
-      arguments: [name, symbol, totalSupply],
+      arguments: [name, symbol, decimals, totalSupply, owner],
     };
 
     const estimateGas = await contract.deploy(deployOptions).estimateGas();
@@ -71,6 +77,7 @@ export class TokenService {
     const token = await this.tokenRepository.create({
       name,
       symbol,
+      decimals,
       totalSupply,
       contractAddress: receipt.contractAddress,
     });

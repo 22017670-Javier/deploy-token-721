@@ -39,3 +39,76 @@ export class TokenTransferDto {
   @IsNotEmpty()
   readonly amount: number;
 }
+
+export class TokenApproveDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly contractAddress: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly spender: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  readonly amount: number;
+}
+
+export class TokenTransferFromDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly contractAddress: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly sender: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly recipient: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  readonly amount: number;
+}
+
+export class MintTokenDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly contractAddress: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly account: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  readonly amount: number;
+}
+
+export class BurnTokenDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly contractAddress: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly account: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  readonly amount: number;
+}

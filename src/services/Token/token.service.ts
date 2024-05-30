@@ -127,4 +127,122 @@ export class TokenService {
     return receipt.contractAddress;
     // Sends the transaction the the testnet
   }
+
+  async approve(contractAddress: string, spender: string, amount: number) {
+    const contract = new this.web3.eth.Contract(
+      TokenArtifact.abi,
+      contractAddress,
+    );
+    const accounts = await this.web3.eth.getAccounts();
+    const sender = accounts[0];
+    const gasEstimate = await contract.methods
+      .approve(spender, amount)
+      .estimateGas({ from: sender });
+    const gasPrice = await this.web3.eth.getGasPrice();
+    const tx = {
+      from: sender,
+      to: contractAddress,
+      gas: gasEstimate,
+      gasPrice,
+      data: contract.methods.approve(spender, amount).encodeABI(),
+    };
+    const signed = await this.web3.eth.accounts.signTransaction(
+      tx,
+      this.privateKey,
+    );
+    const receipt = await this.web3.eth.sendSignedTransaction(
+      signed.rawTransaction,
+    );
+    return receipt;
+  }
+
+  async transferFrom(
+    contractAddress: string,
+    sender: string,
+    recipient: string,
+    amount: number,
+  ) {
+    const contract = new this.web3.eth.Contract(
+      TokenArtifact.abi,
+      contractAddress,
+    );
+    const accounts = await this.web3.eth.getAccounts();
+    const gasEstimate = await contract.methods
+      .transferFrom(sender, recipient, amount)
+      .estimateGas({ from: accounts[0] });
+    const gasPrice = await this.web3.eth.getGasPrice();
+    const tx = {
+      from: accounts[0],
+      to: contractAddress,
+      gas: gasEstimate,
+      gasPrice,
+      data: contract.methods
+        .transferFrom(sender, recipient, amount)
+        .encodeABI(),
+    };
+    const signed = await this.web3.eth.accounts.signTransaction(
+      tx,
+      this.privateKey,
+    );
+    const receipt = await this.web3.eth.sendSignedTransaction(
+      signed.rawTransaction,
+    );
+    return receipt;
+  }
+
+  async mint(contractAddress: string, account: string, amount: number) {
+    const contract = new this.web3.eth.Contract(
+      TokenArtifact.abi,
+      contractAddress,
+    );
+    const accounts = await this.web3.eth.getAccounts();
+    const sender = accounts[0];
+    const gasEstimate = await contract.methods
+      .mint(account, amount)
+      .estimateGas({ from: sender });
+    const gasPrice = await this.web3.eth.getGasPrice();
+    const tx = {
+      from: sender,
+      to: contractAddress,
+      gas: gasEstimate,
+      gasPrice,
+      data: contract.methods.mint(account, amount).encodeABI(),
+    };
+    const signed = await this.web3.eth.accounts.signTransaction(
+      tx,
+      this.privateKey,
+    );
+    const receipt = await this.web3.eth.sendSignedTransaction(
+      signed.rawTransaction,
+    );
+    return receipt;
+  }
+
+  async burn(contractAddress: string, account: string, amount: number) {
+    const contract = new this.web3.eth.Contract(
+      TokenArtifact.abi,
+      contractAddress,
+    );
+    const accounts = await this.web3.eth.getAccounts();
+    const sender = accounts[0];
+    const gasEstimate = await contract.methods
+      .burn(account, amount)
+      .estimateGas({ from: sender });
+    const gasPrice = await this.web3.eth.getGasPrice();
+    const tx = {
+      from: sender,
+      to: contractAddress,
+      gas: gasEstimate,
+      gasPrice,
+      data: contract.methods.burn(account, amount).encodeABI(),
+    };
+    const signed = await this.web3.eth.accounts.signTransaction(
+      tx,
+      this.privateKey,
+    );
+    const receipt = await this.web3.eth.sendSignedTransaction(
+      signed.rawTransaction,
+    );
+    return receipt;
+  }
 }

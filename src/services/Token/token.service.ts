@@ -157,14 +157,14 @@ export class TokenService {
   }
 
   async transferFrom(
-    contractAddress: string,
+
     sender: string,
     recipient: string,
     amount: number,
   ) {
     const contract = new this.web3.eth.Contract(
       TokenArtifact.abi,
-      contractAddress,
+      recipient,
     );
     const accounts = await this.web3.eth.getAccounts();
     const gasEstimate = await contract.methods
@@ -173,7 +173,7 @@ export class TokenService {
     const gasPrice = await this.web3.eth.getGasPrice();
     const tx = {
       from: accounts[0],
-      to: contractAddress,
+      to: recipient,
       gas: gasEstimate,
       gasPrice,
       data: contract.methods

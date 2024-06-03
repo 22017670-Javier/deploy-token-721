@@ -88,7 +88,6 @@ export class TokenController {
   ): Promise<BaseResponse> {
     try {
       const receipt = await this.tokenService.transferFrom(
-        dto.contractAddress,
         dto.sender,
         dto.recipient,
         dto.amount,

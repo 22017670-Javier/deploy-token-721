@@ -58,10 +58,10 @@ export class TokenApproveDto {
 }
 
 export class TokenTransferFromDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  readonly contractAddress: string;
+  // @ApiProperty()
+  // @IsString()
+  // @IsNotEmpty()
+  // readonly contractAddress: string;
 
   @ApiProperty()
   @IsString()

@@ -112,3 +112,15 @@ export class BurnTokenDto {
   @IsNotEmpty()
   readonly amount: number;
 }
+
+export class RegisterTokenDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly contractAddress: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  readonly symbol: string;
+}

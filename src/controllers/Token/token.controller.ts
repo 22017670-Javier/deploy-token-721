@@ -13,6 +13,7 @@ import {
   TokenTransferFromDto,
   MintTokenDto,
   BurnTokenDto,
+  RegisterTokenDto,
 } from './token.dtos';
 import { BaseResponse } from 'src/base/base-response';
 import { ApiOperation } from '@nestjs/swagger';
@@ -139,6 +140,26 @@ export class TokenController {
         success: true,
         message: 'Token burnt successfully',
         data: { receipt },
+      };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('register')
+  @ApiOperation({
+    summary: 'Register the deployed token as an asset on Fireblocks',
+  })
+  async RegisterToken(@Body() dto: RegisterTokenDto): Promise<BaseResponse> {
+    try {
+      await this.tokenService.registerAssetOnFireblocks(
+        dto.contractAddress,
+        dto.symbol,
+      );
+      return {
+        success: true,
+        message: 'Token registered on Fireblocks successfully',
+        data: null,
       };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);

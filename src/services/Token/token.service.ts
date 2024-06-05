@@ -4,12 +4,15 @@ import Web3 from 'web3';
 import HDWalletProvider from '@truffle/hdwallet-provider';
 import * as dotenv from 'dotenv';
 import * as TokenArtifact from 'src/Token.json';
+import { FireblocksSDK } from 'fireblocks-sdk';
+import fs from 'fs';
 dotenv.config();
 
 @Injectable()
 export class TokenService {
   private web3: Web3;
   private privateKey: string;
+  private fireblocks: FireblocksSDK;
   constructor(
     @Inject(TOKEN_REPOSITORY)
     private tokenRepository: typeof TokenModel,
@@ -28,6 +31,32 @@ export class TokenService {
       providerOrUrl: InfuraUrl,
     });
     this.web3 = new Web3(provider as any);
+
+    const fireblocksApiKey = process.env.FIREBLOCKS_API_KEY;
+    if (!fireblocksApiKey) {
+      throw new Error('FIREBLOCKS_API_KEY is required');
+    }
+
+    const fireblocksPrivatePath = process.env.FIREBLOCKS_PRIVATE_KEY_PATH;
+    if (!fireblocksPrivatePath) {
+      throw new Error('FIREBLOCKS_PRIVATE_KEY_PATH is required');
+    }
+
+    const fireblocksBaseUrl = process.env.FIREBLOCKS_BASE_URL;
+    if (!fireblocksBaseUrl) {
+      throw new Error('FIREBLOCKS_BASE_URL is required');
+    }
+
+    const fireblocksPrivateKey = fs.readFileSync(
+      fireblocksPrivatePath,
+      'utf-8',
+    );
+
+    this.fireblocks = new FireblocksSDK(
+      fireblocksPrivateKey,
+      fireblocksApiKey,
+      fireblocksBaseUrl,
+    );
   }
 
   async deployToken(dto: {
@@ -59,7 +88,7 @@ export class TokenService {
       data: transaction.encodeABI(),
       gas: estimateGas,
       gasPrice,
-      from: (await this.web3.eth.getAccounts())[0],
+      from: owner,
     };
     // Contains the encoded ABI data, gas, gas price, and the sender address
 
@@ -83,8 +112,25 @@ export class TokenService {
     });
     // Creates a new token in the database (Token Repository)
 
+    await this.registerAssetOnFireblocks(token.contractAddress, symbol);
+    // Using the registerAssetOnFireblocks method to register the asset on Fireblocks
+
     return token.contractAddress;
     // Returns the contract address of the newly deployed token
+  }
+
+  async registerAssetOnFireblocks(contractAddress: string, symbol: string) {
+    const blockchainId = 'ETH_TEST5';
+    try {
+      const registerAsset = await this.fireblocks.registerNewAsset(
+        blockchainId,
+        contractAddress,
+        symbol,
+      );
+      console.log('Registered asset on Fireblocks', registerAsset);
+    } catch (error) {
+      console.error('Error registering asset on Fireblocks', error);
+    }
   }
 
   async transfer(contractAddress: string, recipient: string, amount: number) {
@@ -156,16 +202,8 @@ export class TokenService {
     return receipt;
   }
 
-  async transferFrom(
-
-    sender: string,
-    recipient: string,
-    amount: number,
-  ) {
-    const contract = new this.web3.eth.Contract(
-      TokenArtifact.abi,
-      recipient,
-    );
+  async transferFrom(sender: string, recipient: string, amount: number) {
+    const contract = new this.web3.eth.Contract(TokenArtifact.abi, recipient);
     const accounts = await this.web3.eth.getAccounts();
     const gasEstimate = await contract.methods
       .transferFrom(sender, recipient, amount)

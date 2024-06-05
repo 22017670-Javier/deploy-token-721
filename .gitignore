@@ -54,3 +54,8 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+fireblocks-secret.key
+/home/jav/dev/deploy-token/fireblocks-secret.key
+dev/deploy-token/fireblocks-secret.key
+

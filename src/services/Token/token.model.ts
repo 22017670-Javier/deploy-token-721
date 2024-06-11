@@ -16,11 +16,6 @@ export class TokenModel extends BaseModel {
   })
   symbol: string;
 
-  @Column({
-    allowNull: false,
-  })
-  totalSupply: number;
-
   @Column({})
   contractAddress: string;
 }

@@ -3,7 +3,7 @@ import { TOKEN_REPOSITORY, TokenModel } from './token.model';
 import Web3 from 'web3';
 import HDWalletProvider from '@truffle/hdwallet-provider';
 import * as dotenv from 'dotenv';
-import * as TokenArtifact from 'src/Token.json';
+import * as TokenArtifact from 'src/NFT.json';
 import { FireblocksSDK } from 'fireblocks-sdk';
 import fs from 'fs';
 dotenv.config();
@@ -59,13 +59,8 @@ export class TokenService {
     );
   }
 
-  async deployToken(dto: {
-    name: string;
-    symbol: string;
-    decimals: number;
-    totalSupply: number;
-  }) {
-    const { name, symbol, decimals, totalSupply } = dto;
+  async deployToken(dto: { name: string; symbol: string }) {
+    const { name, symbol } = dto;
     const owner = (await this.web3.eth.getAccounts())[0];
 
     const contract = new this.web3.eth.Contract(TokenArtifact.abi);
@@ -75,7 +70,7 @@ export class TokenService {
     const deployOptions = {
       data: TokenArtifact.bytecode,
       // Contains the compiled contract that is to be deployed onto the network
-      arguments: [name, symbol, decimals, totalSupply, owner],
+      arguments: [name, symbol],
     };
 
     const estimateGas = await contract.deploy(deployOptions).estimateGas();
@@ -106,92 +101,39 @@ export class TokenService {
     const token = await this.tokenRepository.create({
       name,
       symbol,
-      decimals,
-      totalSupply,
+      owner,
       contractAddress: receipt.contractAddress,
     });
     // Creates a new token in the database (Token Repository)
 
-    await this.registerAssetOnFireblocks(token.contractAddress, symbol);
+    // await this.registerAssetOnFireblocks(token.contractAddress, symbol);
     // Using the registerAssetOnFireblocks method to register the asset on Fireblocks
 
     return token.contractAddress;
     // Returns the contract address of the newly deployed token
   }
 
-  async registerAssetOnFireblocks(contractAddress: string, symbol: string) {
-    const blockchainId = 'ETH_TEST5';
-    try {
-      const registerAsset = await this.fireblocks.registerNewAsset(
-        blockchainId,
-        contractAddress,
-        symbol,
-      );
-      console.log('Registered asset on Fireblocks', registerAsset);
-    } catch (error) {
-      console.error('Error registering asset on Fireblocks', error);
-    }
-  }
+  async mintToken(dto: { contractAddress: string; to: string; uri: string }) {
+    const { contractAddress, to, uri } = dto;
 
-  async transfer(contractAddress: string, recipient: string, amount: number) {
     const contract = new this.web3.eth.Contract(
       TokenArtifact.abi,
       contractAddress,
     );
-    // This line of code creates a contract instance at the specified contract address
+    const owner = (await this.web3.eth.getAccounts())[0];
 
-    const accounts = await this.web3.eth.getAccounts();
-    const sender = accounts[0];
-    // Retrieves the all addresses and sets the first address as the sender
-
-    const gasEstimate = await contract.methods
-      .transfer(recipient, amount)
-      .estimateGas({ from: sender });
-    // Estimate the gas needed to complete this transaction
-
+    const mint = contract.methods.safeMint(to, uri);
     const gasPrice = await this.web3.eth.getGasPrice();
-    // Retrieves current gas price from the network
+
+    const data = mint.encodeABI();
 
     const tx = {
-      from: sender,
+      from: owner,
       to: contractAddress,
-      gas: gasEstimate,
       gasPrice,
-      data: contract.methods.transfer(recipient, amount).encodeABI(),
+      data,
     };
-    // Prepares the transaction object
 
-    const signed = await this.web3.eth.accounts.signTransaction(
-      tx,
-      this.privateKey,
-    );
-    // Signs the transaction using sender's private key
-
-    const receipt = await this.web3.eth.sendSignedTransaction(
-      signed.rawTransaction,
-    );
-    return receipt.contractAddress;
-    // Sends the transaction the the testnet
-  }
-
-  async approve(contractAddress: string, spender: string, amount: number) {
-    const contract = new this.web3.eth.Contract(
-      TokenArtifact.abi,
-      contractAddress,
-    );
-    const accounts = await this.web3.eth.getAccounts();
-    const sender = accounts[0];
-    const gasEstimate = await contract.methods
-      .approve(spender, amount)
-      .estimateGas({ from: sender });
-    const gasPrice = await this.web3.eth.getGasPrice();
-    const tx = {
-      from: sender,
-      to: contractAddress,
-      gas: gasEstimate,
-      gasPrice,
-      data: contract.methods.approve(spender, amount).encodeABI(),
-    };
     const signed = await this.web3.eth.accounts.signTransaction(
       tx,
       this.privateKey,
@@ -199,88 +141,20 @@ export class TokenService {
     const receipt = await this.web3.eth.sendSignedTransaction(
       signed.rawTransaction,
     );
+
     return receipt;
   }
-
-  async transferFrom(sender: string, recipient: string, amount: number) {
-    const contract = new this.web3.eth.Contract(TokenArtifact.abi, recipient);
-    const accounts = await this.web3.eth.getAccounts();
-    const gasEstimate = await contract.methods
-      .transferFrom(sender, recipient, amount)
-      .estimateGas({ from: accounts[0] });
-    const gasPrice = await this.web3.eth.getGasPrice();
-    const tx = {
-      from: accounts[0],
-      to: recipient,
-      gas: gasEstimate,
-      gasPrice,
-      data: contract.methods
-        .transferFrom(sender, recipient, amount)
-        .encodeABI(),
-    };
-    const signed = await this.web3.eth.accounts.signTransaction(
-      tx,
-      this.privateKey,
-    );
-    const receipt = await this.web3.eth.sendSignedTransaction(
-      signed.rawTransaction,
-    );
-    return receipt;
-  }
-
-  async mint(contractAddress: string, account: string, amount: number) {
-    const contract = new this.web3.eth.Contract(
-      TokenArtifact.abi,
-      contractAddress,
-    );
-    const accounts = await this.web3.eth.getAccounts();
-    const sender = accounts[0];
-    const gasEstimate = await contract.methods
-      .mint(account, amount)
-      .estimateGas({ from: sender });
-    const gasPrice = await this.web3.eth.getGasPrice();
-    const tx = {
-      from: sender,
-      to: contractAddress,
-      gas: gasEstimate,
-      gasPrice,
-      data: contract.methods.mint(account, amount).encodeABI(),
-    };
-    const signed = await this.web3.eth.accounts.signTransaction(
-      tx,
-      this.privateKey,
-    );
-    const receipt = await this.web3.eth.sendSignedTransaction(
-      signed.rawTransaction,
-    );
-    return receipt;
-  }
-
-  async burn(contractAddress: string, account: string, amount: number) {
-    const contract = new this.web3.eth.Contract(
-      TokenArtifact.abi,
-      contractAddress,
-    );
-    const accounts = await this.web3.eth.getAccounts();
-    const sender = accounts[0];
-    const gasEstimate = await contract.methods
-      .burn(account, amount)
-      .estimateGas({ from: sender });
-    const gasPrice = await this.web3.eth.getGasPrice();
-    const tx = {
-      from: sender,
-      to: contractAddress,
-      gas: gasEstimate,
-      gasPrice,
-      data: contract.methods.burn(account, amount).encodeABI(),
-    };
-    const signed = await this.web3.eth.accounts.signTransaction(
-      tx,
-      this.privateKey,
-    );
-    const receipt = await this.web3.eth.sendSignedTransaction(
-      signed.rawTransaction,
-    );
-    return receipt;
-  }
+  // async registerAssetOnFireblocks(contractAddress: string, symbol: string) {
+  //   const blockchainId = 'ETH_TEST5';
+  //   try {
+  //     const registerAsset = await this.fireblocks.registerNewAsset(
+  //       blockchainId,
+  //       contractAddress,
+  //       symbol,
+  //     );
+  //     console.log('Registered asset on Fireblocks', registerAsset);
+  //   } catch (error) {
+  //     console.error('Error registering asset on Fireblocks', error);
+  //   }
+  // }
 }

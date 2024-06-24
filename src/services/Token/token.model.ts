@@ -18,6 +18,9 @@ export class TokenModel extends BaseModel {
 
   @Column({})
   contractAddress: string;
+
+  @Column({})
+  walletAddress: string;
 }
 
 export const TOKEN_REPOSITORY = Symbol.for('TOKEN_REPOSITORY');

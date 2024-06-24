@@ -4,7 +4,7 @@ import Web3 from 'web3';
 import HDWalletProvider from '@truffle/hdwallet-provider';
 import * as dotenv from 'dotenv';
 import * as TokenArtifact from 'src/NFT.json';
-import { FireblocksSDK } from 'fireblocks-sdk';
+import { FireblocksSDK, TransactionArguments, PeerType } from 'fireblocks-sdk';
 import fs from 'fs';
 dotenv.config();
 
@@ -13,6 +13,9 @@ export class TokenService {
   private web3: Web3;
   private privateKey: string;
   private fireblocks: FireblocksSDK;
+  private vaultAccountId: string;
+  private vaultWallet: string;
+
   constructor(
     @Inject(TOKEN_REPOSITORY)
     private tokenRepository: typeof TokenModel,
@@ -57,6 +60,18 @@ export class TokenService {
       fireblocksApiKey,
       fireblocksBaseUrl,
     );
+
+    const vaultAccountId = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID;
+    if (!vaultAccountId) {
+      throw new Error('FIREBLOCKS_VAULT_ACCOUNT_ID is required');
+    }
+    this.vaultAccountId = vaultAccountId;
+
+    const vaultWallet = process.env.FIREBLOCKS_WALLET_ADDRESS;
+    if (!vaultWallet) {
+      throw new Error('FIREBLOCKS_WALLET_ADDRESS is required');
+    }
+    this.vaultWallet = vaultWallet;
   }
 
   async deployToken(dto: { name: string; symbol: string }) {
@@ -106,10 +121,9 @@ export class TokenService {
     });
     // Creates a new token in the database (Token Repository)
 
-    // await this.registerAssetOnFireblocks(token.contractAddress, symbol);
-    // Using the registerAssetOnFireblocks method to register the asset on Fireblocks
-
-    return token.contractAddress;
+    return {
+      contractAddress: token.contractAddress,
+    };
     // Returns the contract address of the newly deployed token
   }
 
@@ -144,17 +158,88 @@ export class TokenService {
 
     return receipt;
   }
-  // async registerAssetOnFireblocks(contractAddress: string, symbol: string) {
-  //   const blockchainId = 'ETH_TEST5';
-  //   try {
-  //     const registerAsset = await this.fireblocks.registerNewAsset(
-  //       blockchainId,
-  //       contractAddress,
-  //       symbol,
-  //     );
-  //     console.log('Registered asset on Fireblocks', registerAsset);
-  //   } catch (error) {
-  //     console.error('Error registering asset on Fireblocks', error);
-  //   }
-  // }
+
+  async getBalance() {
+    try {
+      const vaultAccount = await this.fireblocks.getVaultAccountById(
+        this.vaultAccountId,
+      );
+
+      if (!vaultAccount) {
+        throw new Error(
+          `Vault account with ID ${this.vaultAccountId} not found.`,
+        );
+      }
+
+      // Fetch owned collections (NFTs) from Fireblocks SDK
+      const ownedCollectionsResponse =
+        await this.fireblocks.listOwnedCollections();
+
+      // Fetch owned assets (tokens) from Fireblocks SDK
+      const ownedAssetsResponse = await this.fireblocks.listOwnedAssets();
+
+      // Accessing data from responses
+      console.log('Owned Collections (NFTs):', ownedCollectionsResponse.data);
+      console.log('Owned Assets (Tokens):', ownedAssetsResponse.data);
+
+      // Construct and return the balance object
+      return {
+        ownedCollections: ownedCollectionsResponse.data,
+        ownedAssets: ownedAssetsResponse.data,
+      };
+    } catch (error) {
+      throw new Error('Error retrieving vault account assets:');
+    }
+  }
+
+  async getWalletAddress() {
+    try {
+      const walletAddress = this.vaultWallet;
+      return walletAddress;
+    } catch (error) {
+      throw new Error('Error retrieving wallet address:');
+    }
+  }
+
+  async transferNft(dto: {
+    asset: string;
+    sourceType: PeerType;
+    destinationType: PeerType;
+    tokenId: string;
+    contractAddress: string;
+    fromAddress: string;
+    toAddress: string;
+  }) {
+    const {
+      asset,
+      sourceType,
+      destinationType,
+      tokenId,
+      contractAddress,
+      fromAddress,
+      toAddress,
+    } = dto;
+
+    const payload: TransactionArguments = {
+      assetId: asset,
+      source: {
+        type: sourceType,
+      },
+      destination: {
+        type: destinationType,
+      },
+      amount: '1',
+      note: 'NFT transfer',
+      extraParameters: {
+        contractCallData: {
+          method: 'safeTransferFrom',
+          params: [fromAddress, toAddress, tokenId],
+          contractAddress: contractAddress,
+        },
+      },
+    };
+
+    const result = await this.fireblocks.createTransaction(payload);
+    return result;
+  }
 }

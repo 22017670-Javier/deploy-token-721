@@ -5,9 +5,9 @@ import { HttpModule } from '@nestjs/axios';
 import {
   TokenModel,
   TokenRepository,
-} from '../src/services/Token/token.model';
-import { TokenService } from '../src/services/Token/token.service';
-import { TokenController } from '../src/controllers/Token/token.controller';
+} from './services/Token/token.model';
+import { TokenService } from './services/Token/token.service';
+import { TokenController } from './controllers/Token/token.controller';
 
 const models: any[] = [TokenModel];
 const modules: any[] = [];
